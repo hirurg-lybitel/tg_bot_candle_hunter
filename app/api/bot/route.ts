@@ -99,15 +99,16 @@ bot.command('stop', async (ctx) => {
 });
 
 bot.command('settings', async (ctx) => {
-  console.log('start');
+  console.log('settings', 123);
   const chatId = ctx.chat?.id;
   if (!chatId) return;
 
   const count = ctx.session.pizzaCount;
   ctx.session.pizzaCount++;
 
+  await ctx.reply(`Test data: ${count}, ${connectedUsers.size}`);
+
   if (!connectedUsers.has(chatId)) {
-    await ctx.reply(`Test data: ${count}, ${connectedUsers.size}`);
     return;
   }
     
