@@ -273,7 +273,7 @@ bot.callbackQuery('back', async (ctx) => {
   await ctx.answerCallbackQuery();
 });
 
-bot.start();
+// bot.start();
 
 const getSettingsKeyboard = (chatId: number) => { 
   const userConfig = connectedUsers.get(chatId);
