@@ -55,9 +55,9 @@ bot.command('start', async (ctx) => {
   );
 
   
-  await getCoinPrices(chatId);
+  // await getCoinPrices(chatId);
 
-  restartCoinPricesInterval(chatId);
+  // restartCoinPricesInterval(chatId);
 });
 
 bot.command('stop', async (ctx) => {
