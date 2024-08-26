@@ -1,0 +1,8 @@
+{
+  "extends": "next/core-web-vitals",
+  "rules": {
+    "comma-spacing": "error",
+    "semi": "error",
+    "indent": ["error", 2, { "SwitchCase": 1 }]
+  }
+}

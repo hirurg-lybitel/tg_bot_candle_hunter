@@ -1,0 +1,11 @@
+{
+    "git.postCommitCommand": "sync",
+    "javascript.format.semicolons": "insert",
+    "typescript.format.insertSpaceAfterCommaDelimiter": true,
+    "typescript.format.semicolons": "insert",
+    "workbench.editor.wrapTabs": true,
+    "files.autoSave": "onFocusChange",
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "explicit"
+    },
+}
