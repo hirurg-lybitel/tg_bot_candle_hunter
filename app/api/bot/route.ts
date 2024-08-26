@@ -2,12 +2,20 @@ export const dynamic = 'force-dynamic';
 
 export const fetchCache = 'force-no-store';
 
-import { Bot, webhookCallback, InlineKeyboard, Context  } from 'grammy';
+import { Bot, webhookCallback, InlineKeyboard, Context, session, SessionFlavor } from 'grammy';
 import { hydrate, HydrateFlavor } from "@grammyjs/hydrate";
 import { BotConfig, CMC_CoinInfo, CoinsList, Language, languages, UserConfig } from '@/types';
 import { getPercentTitle, getSettingsTitle, getTimeIntervalTitle } from './localization';
 
-type MyContext = HydrateFlavor<Context>;
+interface SessionData {
+  pizzaCount: number;
+}
+
+type MyContext = HydrateFlavor<Context> & SessionFlavor<SessionData>;
+
+function initial(): SessionData {
+  return { pizzaCount: 0 };
+}
 
 const baseUrl = 'https://min-api.cryptocompare.com/data';
 
@@ -39,8 +47,10 @@ const chooseLanguage = new InlineKeyboard()
 
 const bot = new Bot<MyContext>(token);
 bot.use(hydrate());
+bot.use(session({ initial }));
 
 bot.command('start', async (ctx) => {
+  console.log('start');
   const userName = ctx.from?.first_name ?? (ctx.from?.language_code === 'en' ? 'User' : 'Пользователь');
   const chatId = ctx.chat.id;
   
@@ -48,7 +58,7 @@ bot.command('start', async (ctx) => {
   connectedUsers.set(chatId, { botConfig: botConfigDefault });
 
   await ctx.reply(
-    `*Добро пожаловать, ${userName}*\\.\n\nТеперь вы подписаны на все памы/дампы\\.\n\nИспользуя команду /settings, вы можете изменить ряд ключевых параметров работы бота\\.`,
+    `*Добро пожаловать, ${userName}*\\.\n\nТеперь вы подписаны на все памы/дампы\\.\n\nИспользуя команду /settings, вы можете изменить ряд ключевых параметров работы бота\\.\nTest data ${connectedUsers.size}`,
     {
       parse_mode: 'MarkdownV2'
     }
@@ -89,10 +99,15 @@ bot.command('stop', async (ctx) => {
 });
 
 bot.command('settings', async (ctx) => {
+  console.log('start');
   const chatId = ctx.chat?.id;
   if (!chatId) return;
 
+  const count = ctx.session.pizzaCount;
+  ctx.session.pizzaCount++;
+
   if (!connectedUsers.has(chatId)) {
+    await ctx.reply(`Test data: ${count}, ${connectedUsers.size}`);
     return;
   }
     
