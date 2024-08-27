@@ -65,7 +65,7 @@ bot.command('start', async (ctx) => {
 
   const { connectedUsers } = ctx.session;
 
-  console.log('start', ctx.session);
+  console.log('start', { session: ctx.session });
   
   connectedUsers?.delete(chatId);
   connectedUsers?.set(chatId, { botConfig: botConfigDefault });
