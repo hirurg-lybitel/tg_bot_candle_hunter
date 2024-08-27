@@ -59,17 +59,18 @@ bot.use(session({
 }));
 
 bot.command('start', async (ctx) => {
-  console.log('start');
   const userName = ctx.from?.first_name ?? (ctx.from?.language_code === 'en' ? 'User' : 'Пользователь');
   const chatId = ctx.chat.id;
 
   const { connectedUsers } = ctx.session;
+
+  console.log('start', ctx.session);
   
   connectedUsers.delete(chatId);
   connectedUsers.set(chatId, { botConfig: botConfigDefault });
 
   await ctx.reply(
-    `*Добро пожаловать, ${userName}*\\.\n\nТеперь вы подписаны на все памы/дампы\\.\n\nИспользуя команду /settings, вы можете изменить ряд ключевых параметров работы бота\\.\nTest data ${connectedUsers?.size}`,
+    `*Добро пожаловать, ${userName}*\\.\n\nТеперь вы подписаны на все памы/дампы\\.\n\nИспользуя команду /settings, вы можете изменить ряд ключевых параметров работы бота\\.`,
     {
       parse_mode: 'MarkdownV2'
     }
