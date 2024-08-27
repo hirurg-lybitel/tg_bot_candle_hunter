@@ -9,13 +9,18 @@ import { BotConfig, CMC_CoinInfo, CoinsList, Language, languages, UserConfig } f
 import { getPercentTitle, getSettingsTitle, getTimeIntervalTitle } from './localization';
 
 interface SessionData {
-  pizzaCount: number;
+  coinList: CoinsList;
+  connectedUsers: Map<number, UserConfig>;
+  userStates: Map<number, "waitPercent" | "waitTimeInterval">;
 }
 
 type MyContext = HydrateFlavor<Context> & SessionFlavor<SessionData>;
 
 function initial(): SessionData {
-  return { pizzaCount: 0 };
+  const coinList = {};
+  const connectedUsers = new Map<number, UserConfig>();
+  const userStates = new Map<number, 'waitPercent' | 'waitTimeInterval'>(); 
+  return { connectedUsers, userStates, coinList };
 }
 
 const baseUrl = 'https://min-api.cryptocompare.com/data';
@@ -26,11 +31,11 @@ const botConfigDefault: BotConfig = {
   lang: 'by'
 };
 
-let coinList: CoinsList = {};
+// let coinList: CoinsList = {};
 const coinListInterval = 24 * 60 * 60 * 1000;
 
-const connectedUsers = new Map<number, UserConfig>();
-const userStates = new Map<number, 'waitPercent' | 'waitTimeInterval'>(); 
+// const connectedUsers = new Map<number, UserConfig>();
+// const userStates = new Map<number, 'waitPercent' | 'waitTimeInterval'>(); 
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
 
@@ -57,6 +62,8 @@ bot.command('start', async (ctx) => {
   console.log('start');
   const userName = ctx.from?.first_name ?? (ctx.from?.language_code === 'en' ? 'User' : 'Пользователь');
   const chatId = ctx.chat.id;
+
+  const { connectedUsers } = ctx.session;
   
   connectedUsers.delete(chatId);
   connectedUsers.set(chatId, { botConfig: botConfigDefault });
@@ -68,6 +75,10 @@ bot.command('start', async (ctx) => {
     }
   );
 
+  setInterval(() => {
+    console.log('two minute Interval');
+  }, 2 * 60 * 1000);
+
   
   // await getCoinPrices(chatId);
 
@@ -76,6 +87,8 @@ bot.command('start', async (ctx) => {
 
 bot.command('stop', async (ctx) => {
   const chatId = ctx.chat.id;
+  const { connectedUsers } = ctx.session;
+
   if (!connectedUsers.has(chatId)) {
     return;
   }
@@ -103,14 +116,13 @@ bot.command('stop', async (ctx) => {
 });
 
 bot.command('settings', async (ctx) => {
-  console.log('settings');
   const chatId = ctx.chat?.id;
   if (!chatId) return;
 
-  const count = ctx.session.pizzaCount;
-  ctx.session.pizzaCount++;
+  const { connectedUsers, userStates, coinList} = ctx.session;
+  console.log('settings', connectedUsers.size, connectedUsers);
 
-  await ctx.reply(`Test data: ${count}, ${connectedUsers.size}`);
+  // await ctx.reply(`Test data: ${count}, ${connectedUsers.size}`);
 
   if (!connectedUsers.has(chatId)) {
     return;
@@ -125,13 +137,15 @@ bot.command('settings', async (ctx) => {
     getSettingsTitle(lang, Object.keys(coinList).length), 
     {
       parse_mode: 'MarkdownV2',
-      reply_markup: getSettingsKeyboard(chatId),
+      reply_markup: getSettingsKeyboard(chatId, ctx.session),
     });
 });
 
 bot.callbackQuery('time-interval', async (ctx) => {
   const chatId = ctx.chat?.id ?? -1;
   if (!chatId) return;
+
+  const { connectedUsers, userStates } = ctx.session;
 
   const userConfig = connectedUsers.get(chatId);
   const lang = userConfig?.botConfig?.lang ?? botConfigDefault.lang;
@@ -152,6 +166,8 @@ bot.callbackQuery('time-interval', async (ctx) => {
 bot.callbackQuery('percent-change', async (ctx) => {
   const chatId = ctx.chat?.id ?? -1;
   
+  const { connectedUsers, userStates } = ctx.session;
+
   const userConfig = connectedUsers.get(chatId);
   const lang = userConfig?.botConfig?.lang ?? botConfigDefault.lang;
   const percent = userConfig?.botConfig?.percent ?? botConfigDefault.percent;
@@ -172,7 +188,7 @@ bot.callbackQuery('language', async (ctx) => {
   const chatId = ctx.chat?.id ?? -1;
 
   await ctx.callbackQuery.message?.editText(
-    `Текущий язык : ${getLanguageFlag(chatId)}.`,
+    `Текущий язык : ${getLanguageFlag(chatId, ctx.session)}.`,
     {
       reply_markup: chooseLanguage
     }
@@ -185,6 +201,8 @@ bot.callbackQuery(languages as unknown as string[], async (ctx) => {
   const newLang = ctx.callbackQuery.data as Language;
 
   const chatId = ctx.chat?.id ?? -1;
+  const { connectedUsers, coinList } = ctx.session;
+
   const userConfig = connectedUsers.get(chatId);
 
   connectedUsers.set(chatId, 
@@ -202,7 +220,7 @@ bot.callbackQuery(languages as unknown as string[], async (ctx) => {
     getSettingsTitle(newLang, Object.keys(coinList).length), 
     { 
       parse_mode: 'MarkdownV2',
-      reply_markup: getSettingsKeyboard(chatId) 
+      reply_markup: getSettingsKeyboard(chatId, ctx.session) 
     });  
 
   await ctx.answerCallbackQuery();
@@ -212,6 +230,8 @@ bot.on(':text', async ctx => {
   const chatId = ctx.chat?.id;
   if (!chatId) return;
   
+  const { connectedUsers, userStates } = ctx.session;
+
   const userConfig = connectedUsers.get(chatId);
 
   const text = ctx.msg?.text ?? '';
@@ -240,7 +260,7 @@ bot.on(':text', async ctx => {
             }
           });
 
-        restartCoinPricesInterval(chatId);
+        restartCoinPricesInterval(chatId, ctx.session);
 
         userStates.delete(chatId);
 
@@ -266,7 +286,7 @@ bot.on(':text', async ctx => {
             }
           });
 
-        restartCoinPricesInterval(chatId);
+        restartCoinPricesInterval(chatId, ctx.session);
   
         userStates.delete(chatId);
   
@@ -281,6 +301,8 @@ bot.on(':text', async ctx => {
 bot.callbackQuery('back', async (ctx) => {
   const chatId = ctx.chat?.id ?? -1;
   
+  const { connectedUsers, coinList } = ctx.session;
+
   const userConfig = connectedUsers.get(chatId);
   const lang = userConfig?.botConfig?.lang ?? botConfigDefault.lang;
 
@@ -288,7 +310,7 @@ bot.callbackQuery('back', async (ctx) => {
     getSettingsTitle(lang, Object.keys(coinList).length), 
     { 
       parse_mode: 'MarkdownV2',
-      reply_markup: getSettingsKeyboard(chatId) 
+      reply_markup: getSettingsKeyboard(chatId, ctx.session) 
     });
   await ctx.answerCallbackQuery();
 });
@@ -297,7 +319,9 @@ bot.catch((err) => console.error('[ Bot error ]', err));
 
 // bot.start();
 
-const getSettingsKeyboard = (chatId: number) => { 
+const getSettingsKeyboard = (chatId: number, session: SessionData) => { 
+  const { connectedUsers } = session;
+
   const userConfig = connectedUsers.get(chatId);
   const time = userConfig?.botConfig?.time ?? botConfigDefault.time;
   const percent = userConfig?.botConfig?.percent ?? botConfigDefault.percent;
@@ -306,7 +330,7 @@ const getSettingsKeyboard = (chatId: number) => {
     .text(`Время: ${time} мин.`, 'time-interval')
     .text(`Процент: ${percent}`, 'percent-change')
     .row()
-    .text(`Язык ${getLanguageFlag(chatId)}`, 'language');
+    .text(`Язык ${getLanguageFlag(chatId, session)}`, 'language');
 
   return settingsKeyboard;
 };
@@ -316,7 +340,9 @@ const flags = new Map<Language, string>([
   ['ru', '🇷🇺']
 ]);
 
-const getLanguageFlag = (chatId: number) => {
+const getLanguageFlag = (chatId: number, session: SessionData) => {
+  const { connectedUsers } = session;
+
   const userConfig = connectedUsers.get(chatId);
   const lang = userConfig?.botConfig?.lang ?? botConfigDefault.lang;
 
@@ -361,7 +387,7 @@ const getCoins = async () => {
         return result;
       }, {} as CoinsList);
 
-    coinList = { ...newCoinsList };
+    return { ...newCoinsList };
 
     // const res = await fetch(`${baseUrl}/all/coinlist`);
 
@@ -404,8 +430,8 @@ const getCoins = async () => {
   }
 };
 
-const getCoinPrices = async(chatId: number) => {
- 
+const getCoinPrices = async(chatId: number, session: SessionData) => {
+  const { connectedUsers, coinList } = session; 
   try {
     const coinsArray = Object.keys(coinList);
     const portionedCoinsList = coinsArray.reduce((result: string[], value: string) => {
@@ -476,27 +502,29 @@ const getCoinPrices = async(chatId: number) => {
   }
 };
 
-const restartCoinListInterval = (chatId: number) => {
-  const userConfig = connectedUsers.get(chatId);
+// const restartCoinListInterval = (chatId: number) => {
+//   const userConfig = connectedUsers.get(chatId);
 
-  let coinListIntervalId = userConfig?.intervals?.coinListIntervalId;
-  if (coinListIntervalId) clearInterval(coinListIntervalId);
+//   let coinListIntervalId = userConfig?.intervals?.coinListIntervalId;
+//   if (coinListIntervalId) clearInterval(coinListIntervalId);
 
-  // Обновляем список монет каждые coinListInterval ms
-  coinListIntervalId = setInterval(() => {
-    getCoins();
-  }, coinListInterval);
+//   // Обновляем список монет каждые coinListInterval ms
+//   coinListIntervalId = setInterval(() => {
+//     getCoins();
+//   }, coinListInterval);
 
-  connectedUsers.set(chatId, {
-    ...userConfig,
-    intervals: {
-      ...userConfig?.intervals,
-      coinListIntervalId
-    }
-  });
-};
+//   connectedUsers.set(chatId, {
+//     ...userConfig,
+//     intervals: {
+//       ...userConfig?.intervals,
+//       coinListIntervalId
+//     }
+//   });
+// };
 
-const restartCoinPricesInterval = (chatId: number) => {
+const restartCoinPricesInterval = (chatId: number, session: SessionData) => {
+  const { connectedUsers } = session;
+
   const userConfig = connectedUsers.get(chatId);
   const time = userConfig?.botConfig?.time ?? botConfigDefault.time;
 
@@ -505,8 +533,8 @@ const restartCoinPricesInterval = (chatId: number) => {
 
   // Получаем цены каждые time ms
   coinPricesIntervalId = setInterval(async () => {
-    await getCoinPrices(chatId);
-    await checkPrices(chatId);
+    await getCoinPrices(chatId, session);
+    await checkPrices(chatId, session);
   }, time * 60 * 1000);
 
   connectedUsers.set(chatId, {
@@ -518,7 +546,9 @@ const restartCoinPricesInterval = (chatId: number) => {
   });
 };
 
-const checkPrices = async (chatId: number) => {
+const checkPrices = async (chatId: number, session: SessionData) => {
+  const { connectedUsers } = session;
+
   const userConfig = connectedUsers.get(chatId);
   const percentConfig = userConfig?.botConfig?.percent ?? botConfigDefault.percent;
   const timeConfig = userConfig?.botConfig?.time ?? botConfigDefault.time;
@@ -559,12 +589,15 @@ const checkPrices = async (chatId: number) => {
   }
 };
 
-console.log(1);
-
 getCoins();
+// setInterval(() => {
+//   getCoins();
+// }, coinListInterval);
+
 setInterval(() => {
-  getCoins();
-}, coinListInterval);
+  console.log('minute Interval');
+}, 1 * 60 * 1000);
+
 
 
 export const POST = webhookCallback(bot, 'std/http');
