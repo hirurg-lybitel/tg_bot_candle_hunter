@@ -287,7 +287,7 @@ bot.on(':text', async ctx => {
             }
           };
 
-        restartCoinPricesInterval(chatId, ctx.session);
+        // restartCoinPricesInterval(chatId, ctx.session);
 
         delete userStates[chatId];
 
@@ -313,7 +313,7 @@ bot.on(':text', async ctx => {
             }
           };
 
-        restartCoinPricesInterval(chatId, ctx.session);
+        // restartCoinPricesInterval(chatId, ctx.session);
   
         delete userStates[chatId];
   
