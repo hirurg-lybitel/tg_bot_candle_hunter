@@ -95,6 +95,7 @@ bot.command('start', async (ctx) => {
 
   setInterval(() => {
     console.log('two minute Interval');
+    bot.api.sendMessage(chatId, 'two minute Interval');
   }, 2 * 60 * 1000);
 
   
@@ -106,6 +107,8 @@ bot.command('start', async (ctx) => {
 bot.command('stop', async (ctx) => {
   const chatId = ctx.chat.id;
   const { connectedUsers } = ctx.session;
+
+  console.log('stop', { connectedUsers });
 
   if (!connectedUsers[chatId]) {
     return;
@@ -619,7 +622,7 @@ getCoins();
 // }, coinListInterval);
 
 setInterval(() => {
-  console.log('minute Interval');
+  console.log('One minute Interval');
 }, 1 * 60 * 1000);
 
 
