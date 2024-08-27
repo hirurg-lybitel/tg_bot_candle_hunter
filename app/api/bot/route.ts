@@ -602,5 +602,5 @@ setInterval(() => {
 
 
 
-export const POST = webhookCallback(bot, 'std/http');
+// export const POST = webhookCallback(bot, 'std/http');
 
