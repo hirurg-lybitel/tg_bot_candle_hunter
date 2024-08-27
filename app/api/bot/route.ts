@@ -143,6 +143,11 @@ bot.command('settings', async (ctx) => {
     });
 });
 
+bot.command('reset', (ctx) => {
+  ctx.session = initial();
+  ctx.reply('Сессия сброшена!');
+});
+
 bot.callbackQuery('time-interval', async (ctx) => {
   const chatId = ctx.chat?.id ?? -1;
   if (!chatId) return;
@@ -602,5 +607,5 @@ setInterval(() => {
 
 
 
-// export const POST = webhookCallback(bot, 'std/http');
+export const POST = webhookCallback(bot, 'std/http');
 
