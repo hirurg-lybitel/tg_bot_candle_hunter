@@ -325,6 +325,7 @@ const getLanguageFlag = (chatId: number) => {
 
 
 const getCoins = async () => {
+  console.log('getCoins');
   try {
     const res = await fetch(
       `https://pro-api.coinmarketcap.com/v1/cryptocurrency/map?sort=cmc_rank&limit=300`,
@@ -557,6 +558,8 @@ const checkPrices = async (chatId: number) => {
     bot.api.sendMessage(chatId, notification, { parse_mode: 'MarkdownV2'});
   }
 };
+
+console.log(1);
 
 getCoins();
 setInterval(() => {
