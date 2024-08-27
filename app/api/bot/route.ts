@@ -20,7 +20,7 @@ function initial(): SessionData {
   const coinList = {};
   const connectedUsers = new Map<number, UserConfig>();
   const userStates = new Map<number, 'waitPercent' | 'waitTimeInterval'>(); 
-  console.log('initial', { connectedUsers });
+  console.log('initial', { connectedUsers, userStates, coinList });
   return { connectedUsers, userStates, coinList };
 }
 
@@ -63,7 +63,9 @@ bot.command('start', async (ctx) => {
   const userName = ctx.from?.first_name ?? (ctx.from?.language_code === 'en' ? 'User' : 'Пользователь');
   const chatId = ctx.chat.id;
 
-  const { connectedUsers } = ctx.session;
+  // const { connectedUsers } = ctx.session;
+
+  const connectedUsers: Map<number, UserConfig> = ctx.session.connectedUsers;
 
   console.log('start', { session: ctx.session });
   
