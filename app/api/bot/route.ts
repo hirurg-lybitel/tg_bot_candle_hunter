@@ -103,7 +103,7 @@ bot.command('stop', async (ctx) => {
 });
 
 bot.command('settings', async (ctx) => {
-  console.log('settings', 123);
+  console.log('settings');
   const chatId = ctx.chat?.id;
   if (!chatId) return;
 
