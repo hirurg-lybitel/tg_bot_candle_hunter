@@ -20,6 +20,7 @@ function initial(): SessionData {
   const coinList = {};
   const connectedUsers = new Map<number, UserConfig>();
   const userStates = new Map<number, 'waitPercent' | 'waitTimeInterval'>(); 
+  console.log('initial', { connectedUsers });
   return { connectedUsers, userStates, coinList };
 }
 
@@ -66,8 +67,8 @@ bot.command('start', async (ctx) => {
 
   console.log('start', ctx.session);
   
-  connectedUsers.delete(chatId);
-  connectedUsers.set(chatId, { botConfig: botConfigDefault });
+  connectedUsers?.delete(chatId);
+  connectedUsers?.set(chatId, { botConfig: botConfigDefault });
 
   await ctx.reply(
     `*Добро пожаловать, ${userName}*\\.\n\nТеперь вы подписаны на все памы/дампы\\.\n\nИспользуя команду /settings, вы можете изменить ряд ключевых параметров работы бота\\.`,
@@ -90,11 +91,11 @@ bot.command('stop', async (ctx) => {
   const chatId = ctx.chat.id;
   const { connectedUsers } = ctx.session;
 
-  if (!connectedUsers.has(chatId)) {
+  if (!connectedUsers?.has(chatId)) {
     return;
   }
 
-  const userConfig = connectedUsers.get(chatId);
+  const userConfig = connectedUsers?.get(chatId);
   const userItervals = userConfig?.intervals;
 
   if (userItervals) {
@@ -106,7 +107,7 @@ bot.command('stop', async (ctx) => {
     }
   }
   
-  connectedUsers.delete(chatId);
+  connectedUsers?.delete(chatId);
 
   await ctx.reply(
     `Больше я не буду присылать вам уведомлений 😔`,
@@ -123,15 +124,15 @@ bot.command('settings', async (ctx) => {
   const { connectedUsers, userStates, coinList} = ctx.session;
   console.log('settings', connectedUsers?.size, connectedUsers);
 
-  // await ctx.reply(`Test data: ${count}, ${connectedUsers.size}`);
+  // await ctx.reply(`Test data: ${count}, ${connectedUsers?.size}`);
 
-  if (!connectedUsers.has(chatId)) {
+  if (!connectedUsers?.has(chatId)) {
     return;
   }
     
   userStates.delete(chatId);
 
-  const userConfig = connectedUsers.get(chatId);
+  const userConfig = connectedUsers?.get(chatId);
   const lang = userConfig?.botConfig?.lang ?? botConfigDefault.lang;
 
   await ctx.reply(
@@ -148,7 +149,7 @@ bot.callbackQuery('time-interval', async (ctx) => {
 
   const { connectedUsers, userStates } = ctx.session;
 
-  const userConfig = connectedUsers.get(chatId);
+  const userConfig = connectedUsers?.get(chatId);
   const lang = userConfig?.botConfig?.lang ?? botConfigDefault.lang;
   const time = userConfig?.botConfig?.time ?? botConfigDefault.time;
 
@@ -169,7 +170,7 @@ bot.callbackQuery('percent-change', async (ctx) => {
   
   const { connectedUsers, userStates } = ctx.session;
 
-  const userConfig = connectedUsers.get(chatId);
+  const userConfig = connectedUsers?.get(chatId);
   const lang = userConfig?.botConfig?.lang ?? botConfigDefault.lang;
   const percent = userConfig?.botConfig?.percent ?? botConfigDefault.percent;
 
@@ -204,9 +205,9 @@ bot.callbackQuery(languages as unknown as string[], async (ctx) => {
   const chatId = ctx.chat?.id ?? -1;
   const { connectedUsers, coinList } = ctx.session;
 
-  const userConfig = connectedUsers.get(chatId);
+  const userConfig = connectedUsers?.get(chatId);
 
-  connectedUsers.set(chatId, 
+  connectedUsers?.set(chatId, 
     { 
       ...userConfig, 
       botConfig: { 
@@ -233,7 +234,7 @@ bot.on(':text', async ctx => {
   
   const { connectedUsers, userStates } = ctx.session;
 
-  const userConfig = connectedUsers.get(chatId);
+  const userConfig = connectedUsers?.get(chatId);
 
   const text = ctx.msg?.text ?? '';
 
@@ -251,7 +252,7 @@ bot.on(':text', async ctx => {
         await ctx.reply('Значение должно больше 5 и меньше 1440.');
       }
       if (timeInterval > 0 ) {
-        connectedUsers.set(chatId, 
+        connectedUsers?.set(chatId, 
           { 
             ...userConfig, 
             botConfig: { 
@@ -277,7 +278,7 @@ bot.on(':text', async ctx => {
         await ctx.reply('Значение должно больше 0 и меньше 100.');
       }
       if (percent > 0 ) {
-        connectedUsers.set(chatId, 
+        connectedUsers?.set(chatId, 
           { 
             ...userConfig, 
             botConfig: { 
@@ -304,7 +305,7 @@ bot.callbackQuery('back', async (ctx) => {
   
   const { connectedUsers, coinList } = ctx.session;
 
-  const userConfig = connectedUsers.get(chatId);
+  const userConfig = connectedUsers?.get(chatId);
   const lang = userConfig?.botConfig?.lang ?? botConfigDefault.lang;
 
   await ctx.callbackQuery.message?.editText(
@@ -323,7 +324,7 @@ bot.catch((err) => console.error('[ Bot error ]', err));
 const getSettingsKeyboard = (chatId: number, session: SessionData) => { 
   const { connectedUsers } = session;
 
-  const userConfig = connectedUsers.get(chatId);
+  const userConfig = connectedUsers?.get(chatId);
   const time = userConfig?.botConfig?.time ?? botConfigDefault.time;
   const percent = userConfig?.botConfig?.percent ?? botConfigDefault.percent;
 
@@ -344,7 +345,7 @@ const flags = new Map<Language, string>([
 const getLanguageFlag = (chatId: number, session: SessionData) => {
   const { connectedUsers } = session;
 
-  const userConfig = connectedUsers.get(chatId);
+  const userConfig = connectedUsers?.get(chatId);
   const lang = userConfig?.botConfig?.lang ?? botConfigDefault.lang;
 
   return flags.get(lang);
@@ -468,7 +469,7 @@ const getCoinPrices = async(chatId: number, session: SessionData) => {
 
     const currentPrices: { [key: string]: { USD: number }} = result.reduce((res, item) => ({ ...res, ...item }), {});
 
-    const userConfig = connectedUsers.get(chatId);
+    const userConfig = connectedUsers?.get(chatId);
     const trackedPrices = userConfig?.prices ?? {};
 
     for (const [coinSymbol, value] of Object.entries(currentPrices)) {
@@ -493,7 +494,7 @@ const getCoinPrices = async(chatId: number, session: SessionData) => {
       };
     }
 
-    connectedUsers.set(chatId, {
+    connectedUsers?.set(chatId, {
       ...userConfig,
       prices: { ...trackedPrices }
     });
@@ -504,7 +505,7 @@ const getCoinPrices = async(chatId: number, session: SessionData) => {
 };
 
 // const restartCoinListInterval = (chatId: number) => {
-//   const userConfig = connectedUsers.get(chatId);
+//   const userConfig = connectedUsers?.get(chatId);
 
 //   let coinListIntervalId = userConfig?.intervals?.coinListIntervalId;
 //   if (coinListIntervalId) clearInterval(coinListIntervalId);
@@ -514,7 +515,7 @@ const getCoinPrices = async(chatId: number, session: SessionData) => {
 //     getCoins();
 //   }, coinListInterval);
 
-//   connectedUsers.set(chatId, {
+//   connectedUsers?.set(chatId, {
 //     ...userConfig,
 //     intervals: {
 //       ...userConfig?.intervals,
@@ -526,7 +527,7 @@ const getCoinPrices = async(chatId: number, session: SessionData) => {
 const restartCoinPricesInterval = (chatId: number, session: SessionData) => {
   const { connectedUsers } = session;
 
-  const userConfig = connectedUsers.get(chatId);
+  const userConfig = connectedUsers?.get(chatId);
   const time = userConfig?.botConfig?.time ?? botConfigDefault.time;
 
   let coinPricesIntervalId = userConfig?.intervals?.coinPricesIntervalId;
@@ -538,7 +539,7 @@ const restartCoinPricesInterval = (chatId: number, session: SessionData) => {
     await checkPrices(chatId, session);
   }, time * 60 * 1000);
 
-  connectedUsers.set(chatId, {
+  connectedUsers?.set(chatId, {
     ...userConfig,
     intervals: {
       ...userConfig?.intervals,
@@ -550,7 +551,7 @@ const restartCoinPricesInterval = (chatId: number, session: SessionData) => {
 const checkPrices = async (chatId: number, session: SessionData) => {
   const { connectedUsers } = session;
 
-  const userConfig = connectedUsers.get(chatId);
+  const userConfig = connectedUsers?.get(chatId);
   const percentConfig = userConfig?.botConfig?.percent ?? botConfigDefault.percent;
   const timeConfig = userConfig?.botConfig?.time ?? botConfigDefault.time;
   const trackedPrices = userConfig?.prices ?? {};
