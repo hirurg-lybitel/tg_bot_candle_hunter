@@ -65,12 +65,16 @@ bot.command('start', async (ctx) => {
 
   // const { connectedUsers } = ctx.session;
 
-  const connectedUsers: Map<number, UserConfig> = ctx.session.connectedUsers;
+  const connectedUsers: any = ctx.session.connectedUsers;
 
   console.log('start', { session: ctx.session });
+
+  connectedUsers[chatId] = {
+    botConfig: botConfigDefault
+  };
   
-  connectedUsers?.delete(chatId);
-  connectedUsers?.set(chatId, { botConfig: botConfigDefault });
+  // connectedUsers?.delete(chatId);
+  // connectedUsers?.set(chatId, { botConfig: botConfigDefault });
 
   await ctx.reply(
     `*Добро пожаловать, ${userName}*\\.\n\nТеперь вы подписаны на все памы/дампы\\.\n\nИспользуя команду /settings, вы можете изменить ряд ключевых параметров работы бота\\.`,
