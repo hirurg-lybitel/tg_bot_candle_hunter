@@ -69,7 +69,7 @@ bot.command('start', async (ctx) => {
   connectedUsers.set(chatId, { botConfig: botConfigDefault });
 
   await ctx.reply(
-    `*Добро пожаловать, ${userName}*\\.\n\nТеперь вы подписаны на все памы/дампы\\.\n\nИспользуя команду /settings, вы можете изменить ряд ключевых параметров работы бота\\.\nTest data ${connectedUsers.size}`,
+    `*Добро пожаловать, ${userName}*\\.\n\nТеперь вы подписаны на все памы/дампы\\.\n\nИспользуя команду /settings, вы можете изменить ряд ключевых параметров работы бота\\.\nTest data ${connectedUsers?.size}`,
     {
       parse_mode: 'MarkdownV2'
     }
@@ -120,7 +120,7 @@ bot.command('settings', async (ctx) => {
   if (!chatId) return;
 
   const { connectedUsers, userStates, coinList} = ctx.session;
-  console.log('settings', connectedUsers.size, connectedUsers);
+  console.log('settings', connectedUsers?.size, connectedUsers);
 
   // await ctx.reply(`Test data: ${count}, ${connectedUsers.size}`);
 
