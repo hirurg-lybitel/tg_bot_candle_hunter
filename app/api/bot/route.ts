@@ -4,6 +4,7 @@ export const fetchCache = 'force-no-store';
 
 import { Bot, webhookCallback, InlineKeyboard, Context, session, SessionFlavor } from 'grammy';
 import { hydrate, HydrateFlavor } from "@grammyjs/hydrate";
+import { freeStorage } from "@grammyjs/storage-free";
 import { BotConfig, CMC_CoinInfo, CoinsList, Language, languages, UserConfig } from '@/types';
 import { getPercentTitle, getSettingsTitle, getTimeIntervalTitle } from './localization';
 
@@ -47,7 +48,10 @@ const chooseLanguage = new InlineKeyboard()
 
 const bot = new Bot<MyContext>(token);
 bot.use(hydrate());
-bot.use(session({ initial }));
+bot.use(session({
+  initial,
+  storage: freeStorage<SessionData>(bot.token),
+}));
 
 bot.command('start', async (ctx) => {
   console.log('start');
@@ -288,6 +292,8 @@ bot.callbackQuery('back', async (ctx) => {
     });
   await ctx.answerCallbackQuery();
 });
+
+bot.catch((err) => console.error('[ Bot error ]', err));
 
 // bot.start();
 
