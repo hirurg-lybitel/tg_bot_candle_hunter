@@ -8,18 +8,30 @@ import { freeStorage } from "@grammyjs/storage-free";
 import { BotConfig, CMC_CoinInfo, CoinsList, Language, languages, UserConfig } from '@/types';
 import { getPercentTitle, getSettingsTitle, getTimeIntervalTitle } from './localization';
 
+interface ConnectedUsers {
+  [key: number]: UserConfig;
+}
+
+interface UserStates {
+  [key: number]: "waitPercent" | "waitTimeInterval";
+}
+
 interface SessionData {
   coinList: CoinsList;
-  connectedUsers: Map<number, UserConfig>;
-  userStates: Map<number, "waitPercent" | "waitTimeInterval">;
+  // connectedUsers: Map<number, UserConfig>;
+  // userStates: Map<number, "waitPercent" | "waitTimeInterval">;
+  connectedUsers: ConnectedUsers;
+  userStates: UserStates;
 }
 
 type MyContext = HydrateFlavor<Context> & SessionFlavor<SessionData>;
 
 function initial(): SessionData {
   const coinList = {};
-  const connectedUsers = new Map<number, UserConfig>();
-  const userStates = new Map<number, 'waitPercent' | 'waitTimeInterval'>(); 
+  const connectedUsers = {};
+  const userStates = {}; 
+  // const connectedUsers = new Map<number, UserConfig>();
+  // const userStates = new Map<number, 'waitPercent' | 'waitTimeInterval'>(); 
   console.log('initial', { connectedUsers, userStates, coinList });
   return { connectedUsers, userStates, coinList };
 }
@@ -63,9 +75,7 @@ bot.command('start', async (ctx) => {
   const userName = ctx.from?.first_name ?? (ctx.from?.language_code === 'en' ? 'User' : 'Пользователь');
   const chatId = ctx.chat.id;
 
-  // const { connectedUsers } = ctx.session;
-
-  const connectedUsers: any = ctx.session.connectedUsers;
+  const { connectedUsers } = ctx.session;
 
   console.log('start', { session: ctx.session });
 
@@ -97,11 +107,11 @@ bot.command('stop', async (ctx) => {
   const chatId = ctx.chat.id;
   const { connectedUsers } = ctx.session;
 
-  if (!connectedUsers?.has(chatId)) {
+  if (!connectedUsers[chatId]) {
     return;
   }
 
-  const userConfig = connectedUsers?.get(chatId);
+  const userConfig = connectedUsers[chatId];
   const userItervals = userConfig?.intervals;
 
   if (userItervals) {
@@ -113,7 +123,8 @@ bot.command('stop', async (ctx) => {
     }
   }
   
-  connectedUsers?.delete(chatId);
+  delete connectedUsers[chatId];
+  // connectedUsers?.delete(chatId);
 
   await ctx.reply(
     `Больше я не буду присылать вам уведомлений 😔`,
@@ -128,17 +139,17 @@ bot.command('settings', async (ctx) => {
   if (!chatId) return;
 
   const { connectedUsers, userStates, coinList} = ctx.session;
-  console.log('settings', connectedUsers?.size, connectedUsers);
+  console.log('settings', connectedUsers);
 
   // await ctx.reply(`Test data: ${count}, ${connectedUsers?.size}`);
 
-  if (!connectedUsers?.has(chatId)) {
+  if (!connectedUsers[chatId]) {
     return;
   }
-    
-  userStates.delete(chatId);
 
-  const userConfig = connectedUsers?.get(chatId);
+  delete userStates[chatId];
+
+  const userConfig = connectedUsers[chatId];
   const lang = userConfig?.botConfig?.lang ?? botConfigDefault.lang;
 
   await ctx.reply(
@@ -160,7 +171,7 @@ bot.callbackQuery('time-interval', async (ctx) => {
 
   const { connectedUsers, userStates } = ctx.session;
 
-  const userConfig = connectedUsers?.get(chatId);
+  const userConfig = connectedUsers[chatId];
   const lang = userConfig?.botConfig?.lang ?? botConfigDefault.lang;
   const time = userConfig?.botConfig?.time ?? botConfigDefault.time;
 
@@ -171,7 +182,7 @@ bot.callbackQuery('time-interval', async (ctx) => {
     }
   );
 
-  userStates.set(chatId, 'waitTimeInterval');
+  userStates[chatId] = 'waitTimeInterval';
   
   await ctx.answerCallbackQuery();
 });
@@ -181,7 +192,7 @@ bot.callbackQuery('percent-change', async (ctx) => {
   
   const { connectedUsers, userStates } = ctx.session;
 
-  const userConfig = connectedUsers?.get(chatId);
+  const userConfig = connectedUsers[chatId];
   const lang = userConfig?.botConfig?.lang ?? botConfigDefault.lang;
   const percent = userConfig?.botConfig?.percent ?? botConfigDefault.percent;
 
@@ -192,7 +203,7 @@ bot.callbackQuery('percent-change', async (ctx) => {
     }
   );
   
-  userStates.set(chatId, 'waitPercent');
+  userStates[chatId] = 'waitPercent';
     
   await ctx.answerCallbackQuery();
 });
@@ -216,9 +227,9 @@ bot.callbackQuery(languages as unknown as string[], async (ctx) => {
   const chatId = ctx.chat?.id ?? -1;
   const { connectedUsers, coinList } = ctx.session;
 
-  const userConfig = connectedUsers?.get(chatId);
+  const userConfig = connectedUsers[chatId];
 
-  connectedUsers?.set(chatId, 
+  connectedUsers[chatId] = 
     { 
       ...userConfig, 
       botConfig: { 
@@ -226,7 +237,7 @@ bot.callbackQuery(languages as unknown as string[], async (ctx) => {
         ...userConfig?.botConfig, 
         lang: newLang 
       }
-    });
+    };
 
 
   await ctx.callbackQuery.message?.editText(
@@ -245,11 +256,11 @@ bot.on(':text', async ctx => {
   
   const { connectedUsers, userStates } = ctx.session;
 
-  const userConfig = connectedUsers?.get(chatId);
+  const userConfig = connectedUsers[chatId];
 
   const text = ctx.msg?.text ?? '';
 
-  const state = userStates.get(chatId);
+  const state = userStates[chatId];
 
   if (!state) return;
 
@@ -263,7 +274,7 @@ bot.on(':text', async ctx => {
         await ctx.reply('Значение должно больше 5 и меньше 1440.');
       }
       if (timeInterval > 0 ) {
-        connectedUsers?.set(chatId, 
+        connectedUsers[chatId] =
           { 
             ...userConfig, 
             botConfig: { 
@@ -271,11 +282,11 @@ bot.on(':text', async ctx => {
               ...userConfig?.botConfig, 
               time: timeInterval 
             }
-          });
+          };
 
         restartCoinPricesInterval(chatId, ctx.session);
 
-        userStates.delete(chatId);
+        delete userStates[chatId];
 
         await ctx.reply('Успешно! Параметр обновлён.', { reply_markup: backKeyboard });
       }    
@@ -289,7 +300,7 @@ bot.on(':text', async ctx => {
         await ctx.reply('Значение должно больше 0 и меньше 100.');
       }
       if (percent > 0 ) {
-        connectedUsers?.set(chatId, 
+        connectedUsers[chatId] =
           { 
             ...userConfig, 
             botConfig: { 
@@ -297,11 +308,11 @@ bot.on(':text', async ctx => {
               ...userConfig?.botConfig, 
               percent
             }
-          });
+          };
 
         restartCoinPricesInterval(chatId, ctx.session);
   
-        userStates.delete(chatId);
+        delete userStates[chatId];
   
         await ctx.reply('Успешно! Параметр обновлён.', { reply_markup: backKeyboard });
       }    
@@ -316,7 +327,7 @@ bot.callbackQuery('back', async (ctx) => {
   
   const { connectedUsers, coinList } = ctx.session;
 
-  const userConfig = connectedUsers?.get(chatId);
+  const userConfig = connectedUsers[chatId];
   const lang = userConfig?.botConfig?.lang ?? botConfigDefault.lang;
 
   await ctx.callbackQuery.message?.editText(
@@ -335,7 +346,7 @@ bot.catch((err) => console.error('[ Bot error ]', err));
 const getSettingsKeyboard = (chatId: number, session: SessionData) => { 
   const { connectedUsers } = session;
 
-  const userConfig = connectedUsers?.get(chatId);
+  const userConfig = connectedUsers[chatId];
   const time = userConfig?.botConfig?.time ?? botConfigDefault.time;
   const percent = userConfig?.botConfig?.percent ?? botConfigDefault.percent;
 
@@ -356,7 +367,7 @@ const flags = new Map<Language, string>([
 const getLanguageFlag = (chatId: number, session: SessionData) => {
   const { connectedUsers } = session;
 
-  const userConfig = connectedUsers?.get(chatId);
+  const userConfig = connectedUsers[chatId];
   const lang = userConfig?.botConfig?.lang ?? botConfigDefault.lang;
 
   return flags.get(lang);
@@ -480,7 +491,7 @@ const getCoinPrices = async(chatId: number, session: SessionData) => {
 
     const currentPrices: { [key: string]: { USD: number }} = result.reduce((res, item) => ({ ...res, ...item }), {});
 
-    const userConfig = connectedUsers?.get(chatId);
+    const userConfig = connectedUsers[chatId];
     const trackedPrices = userConfig?.prices ?? {};
 
     for (const [coinSymbol, value] of Object.entries(currentPrices)) {
@@ -505,10 +516,10 @@ const getCoinPrices = async(chatId: number, session: SessionData) => {
       };
     }
 
-    connectedUsers?.set(chatId, {
+    connectedUsers[chatId] = {
       ...userConfig,
       prices: { ...trackedPrices }
-    });
+    };
     
   } catch (error: any) {
     console.error('[ Get Coin Prices Error ]', error.message);    
@@ -538,7 +549,7 @@ const getCoinPrices = async(chatId: number, session: SessionData) => {
 const restartCoinPricesInterval = (chatId: number, session: SessionData) => {
   const { connectedUsers } = session;
 
-  const userConfig = connectedUsers?.get(chatId);
+  const userConfig = connectedUsers[chatId];
   const time = userConfig?.botConfig?.time ?? botConfigDefault.time;
 
   let coinPricesIntervalId = userConfig?.intervals?.coinPricesIntervalId;
@@ -550,19 +561,19 @@ const restartCoinPricesInterval = (chatId: number, session: SessionData) => {
     await checkPrices(chatId, session);
   }, time * 60 * 1000);
 
-  connectedUsers?.set(chatId, {
+  connectedUsers[chatId] = {
     ...userConfig,
     intervals: {
       ...userConfig?.intervals,
       coinPricesIntervalId
     }
-  });
+  };
 };
 
 const checkPrices = async (chatId: number, session: SessionData) => {
   const { connectedUsers } = session;
 
-  const userConfig = connectedUsers?.get(chatId);
+  const userConfig = connectedUsers[chatId];
   const percentConfig = userConfig?.botConfig?.percent ?? botConfigDefault.percent;
   const timeConfig = userConfig?.botConfig?.time ?? botConfigDefault.time;
   const trackedPrices = userConfig?.prices ?? {};
@@ -613,5 +624,5 @@ setInterval(() => {
 
 
 
-// export const POST = webhookCallback(bot, 'std/http');
+export const POST = webhookCallback(bot, 'std/http');
 
