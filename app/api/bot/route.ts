@@ -612,7 +612,7 @@ const checkPrices = async (chatId: number, session: SessionData) => {
   }
 
   if (notification) {
-    bot.api.sendMessage(chatId, notification, { parse_mode: 'MarkdownV2'});
+    bot.api.sendMessage(chatId, notification, { parse_mode: 'MarkdownV2' });
   }
 };
 
@@ -625,7 +625,8 @@ setInterval(() => {
   console.log('One minute Interval');
 }, 1 * 60 * 1000);
 
+// bot.start();
 
+// export const POST = webhookCallback(bot, 'std/http');
 
-export const POST = webhookCallback(bot, 'std/http');
-
+// https://api.telegram.org/bot7359317429:AAFMkIhFeJc-_d4645qNUA2cVJeRMVIBjRU/sendMessage?chat_id=6263165398&text=1
