@@ -625,8 +625,16 @@ setInterval(() => {
   console.log('One minute Interval');
 }, 1 * 60 * 1000);
 
-// bot.start();
+bot.start();
 
 // export const POST = webhookCallback(bot, 'std/http');
 
+export const GET = () => {
+  return Response.json('GET Request From SERVER');
+};
+
 // https://api.telegram.org/bot7359317429:AAFMkIhFeJc-_d4645qNUA2cVJeRMVIBjRU/sendMessage?chat_id=6263165398&text=1
+
+// https://api.telegram.org/bot7359317429:AAFMkIhFeJc-_d4645qNUA2cVJeRMVIBjRU/getWebhookInfo
+// https://api.telegram.org/bot7359317429:AAFMkIhFeJc-_d4645qNUA2cVJeRMVIBjRU/setWebhook?url=https://tg-bot-candle-hunter.vercel.app/api/bot&drop_pending_updates=True
+// https://api.telegram.org/bot7359317429:AAFMkIhFeJc-_d4645qNUA2cVJeRMVIBjRU/setWebhook?remove
