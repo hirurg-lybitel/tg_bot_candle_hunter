@@ -606,7 +606,7 @@ const checkPrices = async (
 };
 
 
-bot.start();
+// bot.start();
 
 export const POST = webhookCallback(bot, 'std/http');
 
