@@ -645,7 +645,7 @@ export const PUT = async (request: Request) => {
   const notification = await checkPrices(interval, percent, newPrices, lang);
   console.log('notification', notification);
   if (notification) {
-    bot.api.sendMessage(chatId, notification, { parse_mode: 'MarkdownV2' });
+    await bot.api.sendMessage(chatId, notification, { parse_mode: 'MarkdownV2' });
   }
   
   return NextResponse.json('PUT Request From SERVER');
