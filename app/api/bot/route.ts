@@ -113,6 +113,9 @@ bot.command('settings', async (ctx) => {
   const lang = userConfig?.botConfig?.lang ?? botConfigDefault.lang;
 
   const coinList: CoinsList = JSON.parse(decompressFromUTF16(userConfig.coinListUTF16 ?? ''));
+  const prices: CoinsList = JSON.parse(decompressFromUTF16(userConfig.pricesUTF16 ?? ''));
+
+  console.log('settings', { userConfig, coinList, prices });
 
   await ctx.reply(
     getSettingsTitle(lang, Object.keys(coinList).length), 
