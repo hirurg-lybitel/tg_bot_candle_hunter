@@ -1,24 +1,45 @@
+export interface SessionData {
+    userConfig: UserConfig;
+    userStates: UserStates;
+}
+  
 export const languages = ['by', 'ru'] as const;
 export type Language = typeof languages[number];
 
+export const flags = new Map<Language, string>([
+  ['by', '🇧🇾'],
+  ['ru', '🇷🇺']
+]);
+
+export interface UserStates {
+    [key: number]: "waitPercent" | "waitTimeIntervalMinutes" | "waitTimeIntervalHours" | "waitTimeIntervalDays" | "waitTimeIntervalMonths";
+  }
+
+export type TimeIntervalType = 'minutes' | 'hours' | 'days' | 'months';
+export type TimeInterval = {
+    type: TimeIntervalType,
+    value: number;
+}
+
 export type BotConfig = {
-    time: number;
     percent: number;
     lang: Language;
+    interval: TimeInterval;
 }
+
+export type TrackedPrices = {
+    [key: string]: {
+        prevPrice?: number;
+        lastPrice?: number;
+    }
+};
 
 export type UserConfig = {
     botConfig?: BotConfig;
-    intervals?: {
-        coinListIntervalId?: NodeJS.Timeout,
-        coinPricesIntervalId?: NodeJS.Timeout
-    };
-    prices?: {
-        [key: string]: {
-            prevPrice?: number;
-            lastPrice?: number;
-        }
-    }
+    cronJobId?: number;
+    prices?: TrackedPrices;
+    coinListUTF16?: string;
+    pricesUTF16?: string;
 }
 
 export type CoinsList = {
@@ -37,6 +58,18 @@ export type CMC_CoinInfo = {
     is_active: number;
     first_historical_data: string;
     last_historical_data: string;
+}
+
+export enum RequestMethod {
+    GET = 0,
+    POST = 1,
+    OPTIONS = 2,
+    HEAD = 3,
+    PUT = 4,
+    DELETE = 5,
+    TRACE = 6,
+    CONNECT = 7,
+    PATCH = 8
 }
 
 
