@@ -10,6 +10,7 @@ const headers = {
 };
 
 const getCronString = ({ type, value }: TimeInterval) => {
+  console.log('getCronString', { type, value });
   switch (type) {
     case 'minutes':
       return `*/${value} * * * *`;
@@ -88,6 +89,8 @@ export const PATCH  = async (request: NextRequest) => {
 
   const cronString = getCronString(period);
   const schedule = stringToArray(cronString);
+
+  console.log('CRON PATCH', { cronString, schedule });
 
   const body = {
     job: {
