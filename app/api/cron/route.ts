@@ -10,16 +10,20 @@ const headers = {
 };
 
 const getCronString = ({ type, value }: TimeInterval) => {
-  console.log('getCronString', { type, value });
+  const currentDate = new Date();
+  const currenMinute = currentDate.getMinutes();
+  const currenHours = currentDate.getHours();
+  const currenDay = currentDate.getDate();
+  
   switch (type) {
     case 'minutes':
       return `*/${value} * * * *`;
     case 'hours':
-      return `* */${value} * * *`;
+      return `${currenMinute} */${value} * * *`;
     case 'days':
-      return `* * */${value} * *`;
+      return `${currenMinute} ${currenHours} */${value} * *`;
     case 'months':
-      return `* * * */${value} *`;
+      return `${currenMinute} ${currenHours} ${currenDay} */${value} *`;
     default:
       return '0 * * * *';
   }
